@@ -7,18 +7,20 @@ using System.Threading.Tasks;
 
 namespace Blockchain
 {
-    static class Routers
+    class Routers
     {
-        private static Dictionary<string, Action> _getMethodList = new Dictionary<string, Action>();
-        private static Dictionary<string, Action> _postMethodList = new Dictionary<string, Action>();
+        public readonly int Port;
+        private Dictionary<string, Action<Routers>> _getMethodList = new Dictionary<string, Action<Routers>>();
+        private Dictionary<string, Action<Routers>> _postMethodList = new Dictionary<string, Action<Routers>>();
 
-        public static void InitRouters()
+        public Routers(int port)
         {
-            var list = typeof(Routers).GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
+            Port = port;
+            var list = typeof(Routers).GetMethods(BindingFlags.NonPublic | BindingFlags.Instance)
                 .Where(x => x.GetCustomAttributes(typeof(Route), false).Length > 0)
                 .Select(x =>
                     {
-                        Action method = () => x.Invoke(null, null);
+                        Action<Routers> method = (obj) => x.Invoke(obj, null);
                         var routeInfo = x.GetCustomAttributes<Route>().First();
 
                         return (Method: method, RouteInfo: routeInfo);
@@ -37,29 +39,32 @@ namespace Blockchain
                         break;
                 }
             });
+
+            Console.WriteLine($"{Port}번 포트에서 대기 중.");
         }
 
-        public static void ExecuteRequest(RouteMethod method, string path)
+        public void ExecuteRequest(RouteMethod method, string path)
         {
+            Console.WriteLine();
             switch (method)
             {
                 case RouteMethod.GET:
-                    _getMethodList[path]();
+                    _getMethodList[path](this);
                     break;
                 case RouteMethod.POST:
-                    _postMethodList[path]();
+                    _postMethodList[path](this);
                     break;
             }
         }
 
         [Route("/", RouteMethod.GET)]
-        private static void test()
+        private void test()
         {
             Console.WriteLine("'/' 라우터가 실행되었습니다.");
         }
 
         [Route("/route1", RouteMethod.GET)]
-        private static void test2()
+        private void test2()
         {
             Console.WriteLine("'/route1' 라우터가 실행되었습니다.");
         }

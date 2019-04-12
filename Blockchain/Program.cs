@@ -36,8 +36,9 @@ namespace Blockchain
 
         static void Main(string[] args)
         {
-            Routers.InitRouters();
-            Routers.ExecuteRequest(RouteMethod.GET, "/");
+            var r = new Routers(3000);
+            var r2 = new Routers(3001);
+            r.ExecuteRequest(RouteMethod.GET, "/");
         }
     }
 }
